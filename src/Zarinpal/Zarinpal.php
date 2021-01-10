@@ -24,7 +24,7 @@ class Zarinpal extends PortAbstract implements PortInterface
 	 * @var string
 	 */
 	protected $iranServer = 'https://ir.zarinpal.com/pg/services/WebGate/wsdl';
-    
+
     /**
 	 * Address of sandbox SOAP server
 	 *
@@ -66,7 +66,7 @@ class Zarinpal extends PortAbstract implements PortInterface
 	 * @var string
 	 */
 	protected $gateUrl = 'https://www.zarinpal.com/pg/StartPay/';
-    
+
     /**
 	 * Address of sandbox gate for redirect
 	 *
@@ -111,7 +111,7 @@ class Zarinpal extends PortAbstract implements PortInterface
 	 */
 	public function redirect()
 	{
-		switch ($this->config->get('gateway.zarinpal.type')) {
+		switch ($this->connection->type) {
 			case 'zarin-gate':
 				return \Redirect::to(str_replace('$Authority', $this->refId, $this->zarinGateUrl));
 				break;
@@ -153,7 +153,7 @@ class Zarinpal extends PortAbstract implements PortInterface
 	function getCallback()
 	{
 		if (!$this->callbackUrl)
-			$this->callbackUrl = $this->config->get('gateway.zarinpal.callback-url');
+			$this->callbackUrl = $this->connection->callback_url;
 
 		return $this->makeCallback($this->callbackUrl, ['transaction_id' => $this->transactionId()]);
 	}
@@ -169,14 +169,14 @@ class Zarinpal extends PortAbstract implements PortInterface
 	{
 		$this->newTransaction();
 
-		$fields = array(
-			'MerchantID' => $this->config->get('gateway.zarinpal.merchant-id'),
-			'Amount' => $this->amount,
-			'CallbackURL' => $this->getCallback(),
-			'Description' => $this->description ? $this->description : $this->config->get('gateway.zarinpal.description', ''),
-			'Email' => $this->email ? $this->email :$this->config->get('gateway.zarinpal.email', ''),
-			'Mobile' => $this->mobileNumber ? $this->mobileNumber : $this->config->get('gateway.zarinpal.mobile', ''),
-		);
+        $fields = array(
+            'MerchantID' => $this->connection->merchant_id,
+            'Amount' => $this->amount,
+            'CallbackURL' => $this->getCallback(),
+            'Description' => $this->description ? $this->description : $this->connection->description,
+            'Email' => $this->email ? $this->email : $this->connection->email,
+            'Mobile' => $this->mobileNumber ? $this->mobileNumber : $this->connection->mobile,
+        );
 
 		try {
 			$soap = new SoapClient($this->serverUrl, ['encoding' => 'UTF-8']);
@@ -230,7 +230,7 @@ class Zarinpal extends PortAbstract implements PortInterface
 	{
 
 		$fields = array(
-			'MerchantID' => $this->config->get('gateway.zarinpal.merchant-id'),
+			'MerchantID' => $this->connection->merchant_id,
 			'Authority' => $this->refId,
 			'Amount' => $this->amount,
 		);
@@ -264,12 +264,12 @@ class Zarinpal extends PortAbstract implements PortInterface
 	 */
 	protected function setServer()
 	{
-		$server = $this->config->get('gateway.zarinpal.server', 'germany');
+		$server = $this->connection->server;
 		switch ($server) {
 			case 'iran':
 				$this->serverUrl = $this->iranServer;
 				break;
-                
+
 			case 'test':
 				$this->serverUrl = $this->sandboxServer;
 				$this->gateUrl = $this->sandboxGateUrl;

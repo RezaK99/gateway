@@ -2,11 +2,14 @@
 namespace Larabookir\Gateway;
 
 use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Str;
 use Larabookir\Gateway\Enum;
 use Carbon\Carbon;
+use Larabookir\Gateway\Exceptions\PortNotFoundException;
 
 abstract class PortAbstract
 {
+    protected $connection;
 	/**
 	 * Transaction id
 	 *
@@ -95,6 +98,14 @@ abstract class PortAbstract
 	/** bootstraper */
 	function boot(){
 
+	}
+
+	function setConnection($idConnection)
+	{
+        $this->connection = $this->db->table(Str::plural(Str::lower($this->portName)))->find($idConnection);
+        if ($this->connection==null){
+            throw new PortNotFoundException;
+        }
 	}
 
 	function setConfig($config)
